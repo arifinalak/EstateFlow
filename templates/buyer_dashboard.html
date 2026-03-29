@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Buyer Dashboard{% endblock %}
+{% block content %}
+<div class="container page">
+  <h1 class="dash-page-title">Buyer Dashboard</h1>
+  <div class="dash-shell">
+    <aside class="dash-side">
+      <h2>EstateFlow</h2>
+      <a class="active" href="{{ url_for('buyer_dashboard') }}">Dashboard</a>
+      <a href="{{ url_for('properties') }}">Search Properties</a>
+      <a href="#saved-section">Saved Listings</a>
+      <a href="{{ url_for('logout') }}">Logout</a>
+    </aside>
+
+    <section class="dash-main">
+      <div class="dash-toolbar">
+        <span class="text-muted">{{ session.name }}</span>
+        <a href="{{ url_for('properties') }}" class="btn btn-primary btn-sm">Search</a>
+      </div>
+
+      <div class="dash-kpis">
+        <div class="kpi-card"><strong>{{ saved|length }}</strong><span>Saved Listings</span></div>
+        <div class="kpi-card"><strong>{{ inquiries|length }}</strong><span>Total Inquiries</span></div>
+        <div class="kpi-card"><strong>{{ inquiries|selectattr('agent_message')|list|length }}</strong><span>Agent Replies</span></div>
+        <div class="kpi-card"><strong>{{ inquiries|selectattr('status', 'equalto', 'completed')|list|length }}</strong><span>Completed Deals</span></div>
+      </div>
+
+      <h3 id="saved-section" class="section-label">Saved Listings</h3>
+      {% if saved %}
+      <div class="property-grid compact-grid">
+        {% for p in saved %}
+        <div class="property-card">
+          <div class="prop-img">
+            {% if p.image_path %}
+              <img src="{{ url_for('static', filename='images/' ~ p.image_path) }}" alt="{{ p.title }}">
+            {% else %}
+              Home
+            {% endif %}
+          </div>
+          <div class="prop-body">
+            <div class="prop-price">${{ "{:,.0f}".format(p.price) }}</div>
+            <div class="prop-title">{{ p.title }}</div>
+            <div class="prop-city">{{ p.city }}</div>
+            <div class="prop-meta">
+              <span>{{ p.bedrooms }} bd</span>
+              <span>{{ p.bathrooms }} ba</span>
+              <span>{{ p.area }} sqft</span>
+            </div>
+            <a href="{{ url_for('property_detail', pid=p.id) }}" class="btn btn-outline btn-sm mt2">View Details</a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="card table-card" style="text-align:center; padding:2.2rem">
+        <p class="text-muted">No saved listings yet.</p>
+        <a href="{{ url_for('properties') }}" class="btn btn-primary mt2">Browse Properties</a>
+      </div>
+      {% endif %}
+
+      <h3 class="section-label mt2">My Inquiries</h3>
+      <div class="card table-card">
+        <table>
+          <thead><tr><th>Property</th><th>Agent</th><th>My Message</th><th>Agent Message</th><th>Status</th><th>Date</th></tr></thead>
+          <tbody>
+            {% for i in inquiries %}
+            <tr>
+              <td>{{ i.property_title }}</td>
+              <td>{{ i.agent_name }}</td>
+              <td class="text-muted" style="max-width:260px">{{ i.message }}</td>
+              <td class="text-muted" style="max-width:260px">{{ i.agent_message or 'No reply yet.' }}</td>
+              <td><span class="badge badge-{{ i.status }}">{{ i.status }}</span></td>
+              <td class="text-muted">{{ i.created.strftime('%b %d, %Y') if i.created else '—' }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="text-muted">No inquiries sent yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

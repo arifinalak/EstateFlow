@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Properties – EstateElite{% endblock %}
+{% block content %}
+<div class="container page">
+  <div class="dash-header">
+    <h1>All Properties</h1>
+    <p class="text-muted">Browse available listings</p>
+  </div>
+
+  <form class="flex gap1 mb2 filter-form" method="get">
+    <input class="filter-input" type="text" name="q" value="{{ q }}" placeholder="Search title…">
+    <input class="filter-input city" type="text" name="city" value="{{ city }}" placeholder="City…">
+    <select class="filter-input" name="property_type">
+      <option value="">All Types</option>
+      {% for pt in property_types %}
+      <option value="{{ pt }}" {% if property_type == pt %}selected{% endif %}>{{ pt|title }}</option>
+      {% endfor %}
+    </select>
+    <button class="btn btn-primary btn-sm" type="submit">Search</button>
+    <a href="{{ url_for('properties') }}" class="btn btn-outline btn-sm">Clear</a>
+  </form>
+
+  <div class="property-grid">
+    {% for p in properties %}
+    <div class="property-card">
+      <div class="prop-img">
+        {% if p.image_path %}
+          <img src="{{ url_for('static', filename='images/' ~ p.image_path) }}" alt="{{ p.title }}">
+        {% else %}
+          🏠
+        {% endif %}
+      </div>
+      <div class="prop-body">
+        <div class="prop-price">${{ "{:,.0f}".format(p.price) }}</div>
+        <div class="prop-title">{{ p.title }}</div>
+        <div class="prop-city">📍 {{ p.city }}</div>
+        <div class="mt1"><span class="badge">{{ p.property_type or 'apartment' }}</span></div>
+        <div class="prop-meta">
+          <span>🛏 {{ p.bedrooms }}</span>
+          <span>🚿 {{ p.bathrooms }}</span>
+          <span>📐 {{ p.area }} sqft</span>
+        </div>
+        <span class="badge badge-{{ p.status }}">{{ p.status }}</span>
+        <div class="flex gap1 mt2">
+          <a href="{{ url_for('property_detail', pid=p.id) }}" class="btn btn-outline btn-sm">Details</a>
+          {% if session.user_id and session.role == 'buyer' %}
+            <a href="{{ url_for('save_property', pid=p.id) }}" class="btn btn-primary btn-sm">Save</a>
+          {% elif not session.user_id %}
+            <a href="{{ url_for('login') }}" class="btn btn-outline btn-sm">Login to Save</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% else %}
+      <p class="text-muted">No properties found.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

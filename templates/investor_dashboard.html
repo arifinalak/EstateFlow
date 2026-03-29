@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Investor Dashboard{% endblock %}
+{% block content %}
+<div class="container page">
+  <h1 class="dash-page-title">Investor Dashboard</h1>
+  {% set total_value  = portfolio | sum(attribute='current_value') %}
+  {% set total_income = portfolio | sum(attribute='monthly_income') %}
+  <div class="dash-shell">
+    <aside class="dash-side">
+      <h2>EstateFlow</h2>
+      <a class="active" href="{{ url_for('investor_dashboard') }}">Portfolio</a>
+      <a href="{{ url_for('calculator') }}">Deal Calculator</a>
+      <a href="{{ url_for('logout') }}">Logout</a>
+    </aside>
+
+    <section class="dash-main">
+      <div class="dash-toolbar">
+        <span class="text-muted">{{ session.name }}</span>
+        <a href="{{ url_for('calculator') }}" class="btn btn-outline btn-sm">Open Calculator</a>
+      </div>
+
+      <div class="dash-kpis">
+        <div class="kpi-card"><strong>{{ portfolio|length }}</strong><span>Properties Owned</span></div>
+        <div class="kpi-card"><strong>${{ "{:,.0f}".format(total_value) }}</strong><span>Portfolio Value</span></div>
+        <div class="kpi-card"><strong>${{ "{:,.0f}".format(total_income * 12) }}</strong><span>Annual Income</span></div>
+        <div class="kpi-card"><strong>${{ "{:,.0f}".format(total_income) }}</strong><span>Net Monthly</span></div>
+      </div>
+
+      <div class="card table-card mb2">
+        <h3 class="section-label">Add Portfolio Item</h3>
+        <form method="post" action="{{ url_for('add_portfolio') }}">
+          <div class="grid-2">
+            <div class="form-group">
+              <label>Property Name</label>
+              <input type="text" name="property_name" required placeholder="e.g. Gulshan Apartment">
+            </div>
+            <div class="form-group">
+              <label>Purchase Price ($)</label>
+              <input type="number" name="purchase_price" required placeholder="200000">
+            </div>
+            <div class="form-group">
+              <label>Current Value ($)</label>
+              <input type="number" name="current_value" required placeholder="250000">
+            </div>
+            <div class="form-group">
+              <label>Monthly Income ($)</label>
+              <input type="number" name="monthly_income" required placeholder="1500">
+            </div>
+          </div>
+          <button class="btn btn-primary btn-sm" type="submit">Add Property</button>
+        </form>
+      </div>
+
+      <h3 class="section-label">Portfolio Overview</h3>
+      <div class="card table-card">
+        <table>
+          <thead><tr><th>Property</th><th>Purchase Price</th><th>Current Value</th><th>Monthly Income</th><th>ROI</th></tr></thead>
+          <tbody>
+            {% for item in portfolio %}
+            {% set roi = ((item.current_value - item.purchase_price) / item.purchase_price * 100) if item.purchase_price else 0 %}
+            <tr>
+              <td>{{ item.property_name }}</td>
+              <td>${{ "{:,.0f}".format(item.purchase_price) }}</td>
+              <td>${{ "{:,.0f}".format(item.current_value) }}</td>
+              <td>${{ "{:,.0f}".format(item.monthly_income) }}/mo</td>
+              <td style="color:{% if roi > 0 %}var(--success){% else %}var(--danger){% endif %}">
+                {{ "%.1f"|format(roi) }}%
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-muted">No properties yet. Add one above.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

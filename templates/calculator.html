@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Deal Calculator{% endblock %}
+{% block content %}
+<div class="container page">
+  <a href="{{ url_for('investor_dashboard') }}" class="text-muted" style="font-size:.88rem">← Back to Dashboard</a>
+  <div class="dash-header mt2">
+    <h1>Deal Calculator</h1>
+    <p class="text-muted">Analyze cap rate, NOI & cash-on-cash return</p>
+  </div>
+
+  <div class="grid-2" style="align-items:start; gap:2rem">
+    <div class="card">
+      <form method="post">
+        <div class="form-group">
+          <label>Property Price ($)</label>
+          <input type="number" name="price" required placeholder="300000">
+        </div>
+        <div class="form-group">
+          <label>Monthly Rent ($)</label>
+          <input type="number" name="monthly_rent" required placeholder="2000">
+        </div>
+        <div class="form-group">
+          <label>Monthly Expenses ($)</label>
+          <input type="number" name="monthly_expenses" required placeholder="500">
+        </div>
+        <div class="form-group">
+          <label>Down Payment (%)</label>
+          <input type="number" name="down_payment" required placeholder="20" min="1" max="100">
+        </div>
+        <button class="btn btn-primary" type="submit">Calculate</button>
+      </form>
+    </div>
+
+    {% if result %}
+    <div>
+      <div class="stat-card mb1">
+        <div class="stat-num">${{ "{:,.0f}".format(result.noi) }}</div>
+        <div class="stat-label">Net Operating Income (Annual)</div>
+      </div>
+      <div class="stat-card mb1">
+        <div class="stat-num">{{ result.cap_rate }}%</div>
+        <div class="stat-label">Cap Rate</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">{{ result.cash_return }}%</div>
+        <div class="stat-label">Cash-on-Cash Return</div>
+      </div>
+      <div class="card mt2" style="font-size:.85rem; color:var(--muted)">
+        <strong style="color:var(--text)">How to read this:</strong><br><br>
+        <strong>NOI</strong> = (Rent – Expenses) × 12<br>
+        <strong>Cap Rate</strong> = NOI / Purchase Price × 100<br>
+        <strong>Cash Return</strong> = NOI / Down Payment × 100
+      </div>
+    </div>
+    {% else %}
+    <div class="card" style="text-align:center; padding:3rem; color:var(--muted)">
+      <div style="font-size:3rem">🧮</div>
+      <p class="mt2">Enter values and click Calculate to see your deal analysis.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

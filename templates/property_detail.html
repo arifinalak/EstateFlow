@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}{{ prop.title }} – EstateElite{% endblock %}
+{% block content %}
+<div class="container page">
+  {% if prop %}
+  <a href="{{ url_for('properties') }}" class="text-muted" style="font-size:.88rem">← Back to listings</a>
+
+  <div class="grid-2 mt2" style="gap:2rem; align-items:start">
+    <div>
+      <div class="detail-image-wrap">
+        {% if prop.image_path %}
+          <img class="detail-image" src="{{ url_for('static', filename='images/' ~ prop.image_path) }}" alt="{{ prop.title }}">
+        {% else %}
+          <div style="background:linear-gradient(135deg,#1e1e2e,#2a2a1e);height:280px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:5rem">🏠</div>
+        {% endif %}
+      </div>
+    </div>
+    <div>
+      <h1 style="font-size:2rem">{{ prop.title }}</h1>
+      <div class="prop-price mt1" style="font-size:2rem">${{ "{:,.0f}".format(prop.price) }}</div>
+      <p class="text-muted mt1">📍 {{ prop.city }}</p>
+      <p class="text-muted mt1">Type: {{ (prop.property_type or 'apartment')|title }}</p>
+      <span class="badge badge-{{ prop.status }} mt1">{{ prop.status }}</span>
+
+      <div class="card mt2">
+        <div class="grid-3" style="gap:.5rem; font-size:.9rem">
+          <div><span class="text-muted">Bedrooms</span><br><strong>{{ prop.bedrooms }}</strong></div>
+          <div><span class="text-muted">Bathrooms</span><br><strong>{{ prop.bathrooms }}</strong></div>
+          <div><span class="text-muted">Area</span><br><strong>{{ prop.area }} sqft</strong></div>
+        </div>
+      </div>
+
+      <p class="mt2" style="font-size:.9rem; color:var(--muted)">{{ prop.description }}</p>
+
+      {% if prop.agent_name %}
+      <p class="mt1 text-muted" style="font-size:.85rem">Listed by: <strong style="color:var(--text)">{{ prop.agent_name }}</strong></p>
+      {% endif %}
+
+      <div class="flex gap1 mt2">
+        {% if session.user_id %}
+          <a href="{{ url_for('save_property', pid=prop.id) }}" class="btn btn-primary">💾 Save Listing</a>
+        {% else %}
+          <a href="{{ url_for('login') }}" class="btn btn-outline">Login to Save</a>
+        {% endif %}
+      </div>
+
+      {% if session.user_id and session.role == 'buyer' and prop.agent_id %}
+      <div class="card mt2">
+        <h3 class="mb1">Send Inquiry to Agent</h3>
+        <form method="post" action="{{ url_for('inquire_property', pid=prop.id) }}">
+          <div class="form-group">
+            <label>Your Message</label>
+            <textarea name="message" rows="3" placeholder="Hi, I am interested in this property. Please share availability and next steps." required></textarea>
+          </div>
+          <button class="btn btn-primary btn-sm" type="submit">Send Inquiry</button>
+        </form>
+      </div>
+      {% elif session.user_id and session.role != 'buyer' %}
+      <p class="text-muted mt2" style="font-size:.85rem">Only buyers can send inquiries to agents.</p>
+      {% endif %}
+    </div>
+  </div>
+  {% else %}
+    <p class="text-muted">Property not found.</p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -18,6 +18,13 @@ def env_first(*names, default=None):
     return default
 
 
+def parse_int(value, default):
+    try:
+        return int(str(value))
+    except (TypeError, ValueError):
+        return default
+
+
 def parse_mysql_url(raw_url):
     if not raw_url:
         return None
@@ -38,13 +45,18 @@ URL_DB = parse_mysql_url(
 )
 
 
-DB_NAME = (URL_DB or {}).get("database") or env_first("DB_NAME", "MYSQLDATABASE", default="realestate")
+DB_NAME = (URL_DB or {}).get("database") or env_first(
+    "DB_NAME",
+    "MYSQLDATABASE",
+    "MYSQL_DATABASE",
+    default="realestate",
+)
 
 DB_CONFIG = {
-    "host": (URL_DB or {}).get("host") or env_first("DB_HOST", "MYSQLHOST", default="localhost"),
-    "user": (URL_DB or {}).get("user") or env_first("DB_USER", "MYSQLUSER", default="root"),
-    "password": (URL_DB or {}).get("password") or env_first("DB_PASSWORD", "MYSQLPASSWORD", default=""),
-    "port": int((URL_DB or {}).get("port") or env_first("DB_PORT", "MYSQLPORT", default="3306")),
+    "host": (URL_DB or {}).get("host") or env_first("DB_HOST", "MYSQLHOST", "MYSQL_HOST", default="localhost"),
+    "user": (URL_DB or {}).get("user") or env_first("DB_USER", "MYSQLUSER", "MYSQL_USER", default="root"),
+    "password": (URL_DB or {}).get("password") or env_first("DB_PASSWORD", "MYSQLPASSWORD", "MYSQL_PASSWORD", default=""),
+    "port": parse_int((URL_DB or {}).get("port") or env_first("DB_PORT", "MYSQLPORT", "MYSQL_PORT", default="3306"), 3306),
 }
 
 PROPERTY_TYPE_OPTIONS = [

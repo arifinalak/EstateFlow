@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}EstateFlow - Find Your Perfect Property{% endblock %}
+{% block body_class %}home-page{% endblock %}
+
+{% block content %}
+<section class="home-hero">
+  <div class="hero-grid"></div>
+  <div class="container hero-inner reveal">
+    <p class="hero-tag">PREMIUM REAL ESTATE PLATFORM</p>
+    <h1>Find Your Perfect <span>Property Today</span></h1>
+    <p class="hero-copy">
+      EstateFlow connects buyers, investors, and agents on one powerful platform.
+      Search listings, manage leads, track deals, and grow your portfolio.
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="{{ url_for('register') }}">Get Started Free</a>
+      <a class="btn btn-outline" href="{{ url_for('login') }}">Sign In</a>
+    </div>
+    <div class="hero-stats">
+      <div>
+        <strong>500+</strong>
+        <span>Properties Listed</span>
+      </div>
+      <div>
+        <strong>200+</strong>
+        <span>Active Agents</span>
+      </div>
+      <div>
+        <strong>$2B+</strong>
+        <span>Deals Closed</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container page">
+  <div class="section-head reveal">
+    <h2>One Platform, <span>Every Role</span></h2>
+    <p class="text-muted">Built for buyers, agents, and investors who need one unified workflow.</p>
+  </div>
+
+  <div class="grid-3 role-cards">
+    <div class="card role-card reveal">
+      <div class="role-icon">Buyer</div>
+      <h3 class="mt1">Smart Discovery</h3>
+      <p class="text-muted mt1">Search by city, type, and price to find the right home fast.</p>
+    </div>
+    <div class="card role-card reveal">
+      <div class="role-icon">Agent</div>
+      <h3 class="mt1">Lead Management</h3>
+      <p class="text-muted mt1">Track inquiries, respond quickly, and close deals with confidence.</p>
+    </div>
+    <div class="card role-card reveal">
+      <div class="role-icon">Investor</div>
+      <h3 class="mt1">Portfolio Growth</h3>
+      <p class="text-muted mt1">Evaluate opportunities and monitor performance in one dashboard.</p>
+    </div>
+  </div>
+
+  <div class="flex justify-between align-center mb2 mt3 reveal">
+    <h2>Featured Listings</h2>
+    <a href="{{ url_for('properties') }}" class="btn btn-outline btn-sm">View All</a>
+  </div>
+
+  <div class="property-grid">
+    {% for p in properties %}
+    <div class="property-card reveal">
+      <div class="prop-img">
+        {% if p.image_path %}
+          <img src="{{ url_for('static', filename='images/' ~ p.image_path) }}" alt="{{ p.title }}">
+        {% else %}
+          Home
+        {% endif %}
+      </div>
+      <div class="prop-body">
+        <div class="prop-price">${{ "{:,.0f}".format(p.price) }}</div>
+        <div class="prop-title">{{ p.title }}</div>
+        <div class="prop-city">{{ p.city }}</div>
+        <div class="mt1"><span class="badge">{{ p.property_type or 'apartment' }}</span></div>
+        <div class="prop-meta">
+          <span>{{ p.bedrooms }} bed</span>
+          <span>{{ p.bathrooms }} bath</span>
+          <span>{{ p.area }} sqft</span>
+        </div>
+        <a href="{{ url_for('property_detail', pid=p.id) }}" class="btn btn-outline btn-sm mt2">View Details</a>
+      </div>
+    </div>
+    {% else %}
+      <p class="text-muted">No properties yet.</p>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

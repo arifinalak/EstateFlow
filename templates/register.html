@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Register – EstateElite{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-box">
+    <h2>Create Account</h2>
+    <form method="post">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" name="name" required placeholder="Your Name">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" name="email" required placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" name="password" required placeholder="••••••••">
+      </div>
+      <div class="form-group">
+        <label>Role</label>
+        <select name="role">
+          <option value="buyer">Buyer</option>
+          <option value="agent">Agent</option>
+          <option value="investor">Investor</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" style="width:100%" type="submit">Register</button>
+    </form>
+    <p class="text-muted mt2" style="font-size:.85rem;text-align:center">
+      Already have an account? <a href="{{ url_for('login') }}">Login</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

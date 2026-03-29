@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}EstateElite{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="{% block body_class %}{% endblock %}">
+
+<nav class="{% if request.endpoint == 'index' %}home-nav{% endif %}">
+  <a class="nav-brand" href="{{ url_for('index') }}">Estate<span>Flow</span></a>
+  <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false" aria-label="Toggle navigation">Menu</button>
+  <div class="nav-actions">
+    <div class="nav-search-wrap" data-nav-search-wrap>
+      <button class="nav-search-btn" type="button" data-nav-search-toggle aria-expanded="false" aria-label="Search properties">
+        <span aria-hidden="true">🔍</span>
+      </button>
+      <form class="nav-search-panel" data-nav-search-panel action="{{ url_for('properties') }}" method="get">
+        <select name="property_type" aria-label="Property category">
+          <option value="">All Categories</option>
+          <option value="land">Land</option>
+          <option value="office">Office</option>
+          <option value="bungalow">Bungalow</option>
+          <option value="apartment">Apartment</option>
+          <option value="villa">Villa</option>
+          <option value="studio">Studio</option>
+        </select>
+        <input type="text" name="city" placeholder="Location" aria-label="Location">
+        <button class="btn btn-primary btn-sm" type="submit">Search</button>
+      </form>
+    </div>
+
+    <div class="nav-links" data-nav-links>
+      {% if session.user_id %}
+        <a href="{{ url_for('properties') }}">Properties</a>
+        <a href="{{ url_for('dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('logout') }}" class="btn-nav">Logout</a>
+      {% else %}
+        <a href="{{ url_for('login') }}">Login</a>
+        <a href="{{ url_for('register') }}" class="btn-nav">Get Started</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <ul class="flashes mt2">
+        {% for cat, msg in messages %}
+          <li class="flash {{ cat }}">{{ msg }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+</div>
+
+{% block content %}{% endblock %}
+
+<footer class="site-footer">
+  <div class="container footer-grid">
+    <div>
+      <h3 class="footer-brand">EstateElite</h3>
+      <p class="text-muted">Premium real estate experience for buyers, agents, and investors.</p>
+    </div>
+    <div>
+      <h4>Quick Links</h4>
+      <div class="footer-links">
+        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('properties') }}">Properties</a>
+        {% if session.user_id %}
+          <a href="{{ url_for('dashboard') }}">Dashboard</a>
+          <a href="{{ url_for('logout') }}">Logout</a>
+        {% else %}
+          <a href="{{ url_for('login') }}">Login</a>
+          <a href="{{ url_for('register') }}">Register</a>
+        {% endif %}
+      </div>
+    </div>
+    <div>
+      <h4>Contact</h4>
+      <p class="text-muted">Email: hello@estateelite.com</p>
+      <p class="text-muted">Phone: +880 1XXX-XXXXXX</p>
+    </div>
+  </div>
+  <div class="footer-meta">
+    <div class="container">© 2026 EstateElite. All rights reserved.</div>
+  </div>
+</footer>
+
+<script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+
+</body>
+</html>

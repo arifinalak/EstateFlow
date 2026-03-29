@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Agent Dashboard{% endblock %}
+{% block content %}
+<div class="container page">
+  <h1 class="dash-page-title">Agent Dashboard</h1>
+  <div class="dash-shell">
+    <aside class="dash-side">
+      <h2>EstateFlow</h2>
+      <a class="active" href="{{ url_for('agent_dashboard') }}">Dashboard</a>
+      <a href="#listings-section">My Listings</a>
+      <a href="#inquiries-section">My Deals</a>
+      <a href="{{ url_for('logout') }}">Logout</a>
+    </aside>
+
+    <section class="dash-main">
+      <div class="dash-toolbar">
+        <span class="text-muted">{{ session.name }}</span>
+        <div class="flex gap1">
+          <a href="{{ url_for('add_property') }}" class="btn btn-primary btn-sm">Add Property</a>
+        </div>
+      </div>
+
+      <div class="dash-kpis">
+        <div class="kpi-card"><strong>{{ listings|length }}</strong><span>My Listings</span></div>
+        <div class="kpi-card"><strong>{{ leads|length }}</strong><span>Total Leads</span></div>
+        <div class="kpi-card"><strong>{{ inquiries|selectattr('status', 'equalto', 'in_progress')|list|length }}</strong><span>Active Deals</span></div>
+        <div class="kpi-card"><strong>{{ leads|selectattr('status', 'equalto', 'new')|list|length }}</strong><span>New Leads</span></div>
+      </div>
+
+      <div class="dash-grid-2">
+        <div class="card table-card">
+          <h3 class="section-label">Upcoming Follow-ups</h3>
+          <table>
+            <thead><tr><th>Lead</th><th>Contact</th><th>Status</th></tr></thead>
+            <tbody>
+              {% for l in leads[:4] %}
+              <tr>
+                <td>{{ l.name }}</td>
+                <td class="text-muted">{{ l.email or l.phone }}</td>
+                <td><span class="badge badge-{{ l.status }}">{{ l.status }}</span></td>
+              </tr>
+              {% else %}
+              <tr><td colspan="3" class="text-muted">No follow-ups yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card table-card" id="listings-section">
+          <h3 class="section-label">My Listings</h3>
+          <table>
+            <thead><tr><th>Property</th><th>City</th><th>Price</th><th>Status</th></tr></thead>
+            <tbody>
+              {% for p in listings[:5] %}
+              <tr>
+                <td>{{ p.title }}</td>
+                <td>{{ p.city }}</td>
+                <td>${{ "{:,.0f}".format(p.price) }}</td>
+                <td><span class="badge badge-{{ p.status }}">{{ p.status }}</span></td>
+              </tr>
+              {% else %}
+              <tr><td colspan="4" class="text-muted">No listings yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3 id="inquiries-section" class="section-label mt2">Buyer Inquiries</h3>
+      <div class="card table-card">
+        <table>
+          <thead><tr><th>Buyer</th><th>Property</th><th>Buyer Message</th><th>Agent Reply</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
+          <tbody>
+            {% for i in inquiries %}
+            <tr>
+              <td>
+                <strong>{{ i.buyer_name }}</strong><br>
+                <span class="text-muted" style="font-size:.8rem">{{ i.buyer_email }}</span>
+              </td>
+              <td>{{ i.property_title }}</td>
+              <td class="text-muted" style="max-width:260px">{{ i.message }}</td>
+              <td class="text-muted" style="max-width:260px">{{ i.agent_message or '—' }}</td>
+              <td><span class="badge badge-{{ i.status }}">{{ i.status }}</span></td>
+              <td class="text-muted">{{ i.created.strftime('%b %d, %Y') if i.created else '—' }}</td>
+              <td>
+                <form method="post" action="{{ url_for('update_inquiry', iid=i.id) }}" class="inquiry-action-form">
+                  <textarea name="agent_message" rows="2" placeholder="Write message for buyer...">{{ i.agent_message or '' }}</textarea>
+                  <div class="flex gap1 mt1">
+                    <button class="btn btn-outline btn-sm" type="submit" name="action" value="send_message">Send</button>
+                    <button class="btn btn-outline btn-sm" type="submit" name="action" value="in_progress">Progress</button>
+                    <button class="btn btn-primary btn-sm" type="submit" name="action" value="completed">Done</button>
+                  </div>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" class="text-muted">No inquiries yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

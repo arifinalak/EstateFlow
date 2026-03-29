@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+<div class="container page">
+  <h1 class="dash-page-title">Admin Dashboard</h1>
+  <div class="dash-shell">
+    <aside class="dash-side">
+      <h2>EstateFlow</h2>
+      <a class="active" href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+      <a href="#users-section">All Users</a>
+      <a href="#properties-section">Properties</a>
+      <a href="{{ url_for('leads') }}">All Leads</a>
+      <a href="{{ url_for('logout') }}">Logout</a>
+    </aside>
+
+    <section class="dash-main">
+      <div class="dash-kpis">
+        <div class="kpi-card">
+          <strong>{{ t_props }}</strong>
+          <span>Total Properties</span>
+        </div>
+        <div class="kpi-card">
+          <strong>{{ t_users }}</strong>
+          <span>Total Users</span>
+        </div>
+        <div class="kpi-card">
+          <strong>{{ t_leads }}</strong>
+          <span>Active Leads</span>
+        </div>
+        <div class="kpi-card">
+          <strong>{{ users|selectattr('role', 'equalto', 'agent')|list|length }}</strong>
+          <span>Agents</span>
+        </div>
+      </div>
+
+      <h3 id="users-section" class="section-label">All Users</h3>
+      <div class="card table-card mb2">
+        <table>
+          <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th></tr></thead>
+          <tbody>
+            {% for u in users %}
+            <tr>
+              <td>{{ u.id }}</td>
+              <td>{{ u.name }}</td>
+              <td>{{ u.email }}</td>
+              <td><span class="badge">{{ u.role }}</span></td>
+              <td class="text-muted">Active</td>
+              <td class="text-muted">{{ u.created.strftime('%b %d, %Y') if u.created else '—' }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="text-muted">No users found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <h3 id="properties-section" class="section-label">All Properties</h3>
+      <div class="card table-card">
+        <table>
+          <thead><tr><th>Title</th><th>Agent ID</th><th>Type</th><th>Price</th><th>City</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody>
+            {% for p in properties %}
+            <tr>
+              <td>{{ p.title }}</td>
+              <td class="text-muted">{{ p.agent_id or '—' }}</td>
+              <td class="text-muted">{{ p.property_type or 'apartment' }}</td>
+              <td>${{ "{:,.0f}".format(p.price) }}</td>
+              <td>{{ p.city }}</td>
+              <td><span class="badge badge-{{ p.status }}">{{ p.status }}</span></td>
+              <td><a href="{{ url_for('property_detail', pid=p.id) }}" class="btn btn-outline btn-sm">View</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" class="text-muted">No properties found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

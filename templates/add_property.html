@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Add Property{% endblock %}
+{% block content %}
+<div class="container page">
+  <div class="dash-header">
+    <h1>Add New Property</h1>
+    <p class="text-muted">Fill in the listing details</p>
+  </div>
+  <div class="card" style="max-width:600px">
+    <form method="post">
+      <div class="form-group">
+        <label>Title</label>
+        <input type="text" name="title" required placeholder="e.g. Modern Downtown Apartment">
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea name="description" rows="3" placeholder="Describe the property…"></textarea>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Price ($)</label>
+          <input type="number" name="price" required placeholder="250000">
+        </div>
+        <div class="form-group">
+          <label>City</label>
+          <input type="text" name="city" required placeholder="Dhaka">
+        </div>
+      </div>
+      <div class="grid-3">
+        <div class="form-group">
+          <label>Bedrooms</label>
+          <input type="number" name="bedrooms" value="0" min="0">
+        </div>
+        <div class="form-group">
+          <label>Bathrooms</label>
+          <input type="number" name="bathrooms" value="0" min="0">
+        </div>
+        <div class="form-group">
+          <label>Area (sqft)</label>
+          <input type="number" name="area" value="0" min="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select name="status">
+          <option value="available">Available</option>
+          <option value="sold">Sold</option>
+          <option value="rented">Rented</option>
+        </select>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Property Type</label>
+          <select name="property_type">
+            {% for pt in property_types %}
+            <option value="{{ pt }}">{{ pt|title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Image</label>
+          <select name="image_path">
+            <option value="">Auto by type</option>
+            {% for img in image_options %}
+            <option value="{{ img }}">{{ img }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-primary" type="submit">Add Listing</button>
+      <a href="{{ url_for('agent_dashboard') }}" class="btn btn-outline" style="margin-left:.5rem">Cancel</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

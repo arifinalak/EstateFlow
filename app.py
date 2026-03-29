@@ -4,6 +4,7 @@ from mysql.connector import errorcode
 from pathlib import Path
 from functools import wraps
 import os
+from urllib.parse import urlparse
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "realestate_secret_key")
@@ -17,13 +18,33 @@ def env_first(*names, default=None):
     return default
 
 
-DB_NAME = env_first("DB_NAME", "MYSQLDATABASE", default="realestate")
+def parse_mysql_url(raw_url):
+    if not raw_url:
+        return None
+    parsed = urlparse(raw_url)
+    if parsed.scheme not in ("mysql", "mysql2"):
+        return None
+    return {
+        "host": parsed.hostname or "localhost",
+        "user": parsed.username or "root",
+        "password": parsed.password or "",
+        "port": parsed.port or 3306,
+        "database": (parsed.path or "").lstrip("/") or "realestate",
+    }
+
+
+URL_DB = parse_mysql_url(
+    env_first("DB_URL", "DATABASE_URL", "MYSQL_URL", default="")
+)
+
+
+DB_NAME = (URL_DB or {}).get("database") or env_first("DB_NAME", "MYSQLDATABASE", default="realestate")
 
 DB_CONFIG = {
-    "host": env_first("DB_HOST", "MYSQLHOST", default="localhost"),
-    "user": env_first("DB_USER", "MYSQLUSER", default="root"),
-    "password": env_first("DB_PASSWORD", "MYSQLPASSWORD", default=""),
-    "port": int(env_first("DB_PORT", "MYSQLPORT", default="3306")),
+    "host": (URL_DB or {}).get("host") or env_first("DB_HOST", "MYSQLHOST", default="localhost"),
+    "user": (URL_DB or {}).get("user") or env_first("DB_USER", "MYSQLUSER", default="root"),
+    "password": (URL_DB or {}).get("password") or env_first("DB_PASSWORD", "MYSQLPASSWORD", default=""),
+    "port": int((URL_DB or {}).get("port") or env_first("DB_PORT", "MYSQLPORT", default="3306")),
 }
 
 PROPERTY_TYPE_OPTIONS = [

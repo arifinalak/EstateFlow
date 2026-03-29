@@ -9,13 +9,21 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "realestate_secret_key")
 SCHEMA_READY = False
 
-DB_NAME = os.environ.get("DB_NAME", "realestate")
+def env_first(*names, default=None):
+    for name in names:
+        value = os.environ.get(name)
+        if value not in (None, ""):
+            return value
+    return default
+
+
+DB_NAME = env_first("DB_NAME", "MYSQLDATABASE", default="realestate")
 
 DB_CONFIG = {
-    "host": os.environ.get("DB_HOST", "localhost"),
-    "user": os.environ.get("DB_USER", "root"),
-    "password": os.environ.get("DB_PASSWORD", ""),
-    "port": int(os.environ.get("DB_PORT", "3306")),
+    "host": env_first("DB_HOST", "MYSQLHOST", default="localhost"),
+    "user": env_first("DB_USER", "MYSQLUSER", default="root"),
+    "password": env_first("DB_PASSWORD", "MYSQLPASSWORD", default=""),
+    "port": int(env_first("DB_PORT", "MYSQLPORT", default="3306")),
 }
 
 PROPERTY_TYPE_OPTIONS = [
@@ -178,12 +186,15 @@ def init_database_from_schema():
         cleaned_lines.append(line)
     sql = "\n".join(cleaned_lines)
 
-    db = mysql.connector.connect(**DB_CONFIG)
+    db = mysql.connector.connect(database=DB_NAME, **DB_CONFIG)
     cur = db.cursor()
     try:
         for statement in sql.split(";"):
             stmt = statement.strip()
             if not stmt:
+                continue
+            upper_stmt = stmt.upper()
+            if upper_stmt.startswith("CREATE DATABASE") or upper_stmt.startswith("USE "):
                 continue
             cur.execute(stmt)
         db.commit()
@@ -197,7 +208,17 @@ def get_db():
     try:
         db = mysql.connector.connect(database=DB_NAME, **DB_CONFIG)
         if not SCHEMA_READY:
-            ensure_runtime_tables(db)
+            try:
+                ensure_runtime_tables(db)
+            except mysql.connector.Error as err:
+                # First boot on managed DBs can have an empty schema.
+                if err.errno == errorcode.ER_NO_SUCH_TABLE:
+                    db.close()
+                    init_database_from_schema()
+                    db = mysql.connector.connect(database=DB_NAME, **DB_CONFIG)
+                    ensure_runtime_tables(db)
+                else:
+                    raise
             SCHEMA_READY = True
         return db
     except mysql.connector.Error as err:

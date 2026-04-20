@@ -7,7 +7,7 @@
     <p class="text-muted">Fill in the listing details</p>
   </div>
   <div class="card" style="max-width:600px">
-    <form method="post" class="add-property-form">
+    <form method="post" class="add-property-form" enctype="multipart/form-data">
       <div class="form-group">
         <label>Property Type</label>
         <select name="property_type" id="property_type">
@@ -57,16 +57,10 @@
           <option value="rented">Rented</option>
         </select>
       </div>
-      <div class="grid-2">
-        <div class="form-group">
-          <label>Image</label>
-          <select name="image_path">
-            <option value="">Auto by type</option>
-            {% for img in image_options %}
-            <option value="{{ img }}">{{ img }}</option>
-            {% endfor %}
-          </select>
-        </div>
+      <div class="form-group">
+        <label>Upload Image (Auto-compress to 100KB)</label>
+        <input type="file" name="uploaded_image" accept=".jpg,.jpeg,.png,.webp,image/*">
+        <small class="text-muted">If no file is uploaded, a default image is picked automatically by property type.</small>
       </div>
       <button class="btn btn-primary" type="submit">Add Listing</button>
       <a href="{{ url_for('agent_dashboard') }}" class="btn btn-outline" style="margin-left:.5rem">Cancel</a>
@@ -81,6 +75,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const bedroomsInput = document.getElementById('bedrooms');
   const bathroomsInput = document.getElementById('bathrooms');
   const areaLabel = document.getElementById('area-label');
+  const areaSqftLabel = areaLabel.querySelector('.area-label-sqft');
+  const areaHaLabel = areaLabel.querySelector('.area-label-ha');
 
   const syncFields = () => {
     const isLand = propertyType.value === 'land';
@@ -89,7 +85,8 @@ document.addEventListener('DOMContentLoaded', () => {
     bathroomsInput.disabled = isLand;
     bedroomsInput.value = isLand ? 0 : bedroomsInput.value || 0;
     bathroomsInput.value = isLand ? 0 : bathroomsInput.value || 0;
-    areaLabel.textContent = isLand ? 'Size (ha)' : 'Area (sqft)';
+    areaSqftLabel.style.display = isLand ? 'none' : 'inline';
+    areaHaLabel.style.display = isLand ? 'inline' : 'none';
   };
 
   propertyType.addEventListener('input', syncFields);

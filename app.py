@@ -4,7 +4,11 @@ from mysql.connector import errorcode
 from pathlib import Path
 from functools import wraps
 import os
+from io import BytesIO
+from uuid import uuid4
 from urllib.parse import urlparse
+from werkzeug.utils import secure_filename
+from PIL import Image, UnidentifiedImageError
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "realestate_secret_key")
@@ -77,14 +81,70 @@ DEFAULT_TYPE_IMAGES = {
     "studio": "cozy-studio-apartment.jpg",
 }
 
-IMAGE_OPTIONS = [
-    "banglow.jpg",
-    "corporate-house.jpeg",
-    "cozy-studio-apartment.jpg",
-    "gulshan-land.jpg",
-    "lakeview-house.jpg",
-    "pride-villa.jpg",
-]
+MAX_IMAGE_BYTES = 100 * 1024
+UPLOAD_IMAGE_DIR = Path(__file__).resolve().parent / "static" / "images" / "uploads"
+ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
+
+
+def compress_and_store_uploaded_image(file_storage):
+    if not file_storage or not file_storage.filename:
+        return None
+
+    safe_name = secure_filename(file_storage.filename)
+    ext = Path(safe_name).suffix.lower()
+    if ext not in ALLOWED_IMAGE_EXTENSIONS:
+        raise ValueError("Please upload JPG, PNG, or WEBP image files only.")
+
+    raw = file_storage.read()
+    if not raw:
+        raise ValueError("Uploaded image is empty.")
+
+    try:
+        image = Image.open(BytesIO(raw))
+    except UnidentifiedImageError:
+        raise ValueError("Invalid image file. Please upload a valid image.")
+
+    if image.mode not in ("RGB", "L"):
+        image = image.convert("RGB")
+    elif image.mode == "L":
+        image = image.convert("RGB")
+
+    image.thumbnail((2200, 2200), Image.Resampling.LANCZOS)
+
+    best_bytes = None
+    quality_steps = [85, 78, 72, 65, 58, 52, 46, 40]
+    scale_steps = [1.0, 0.92, 0.84, 0.76, 0.68, 0.6]
+
+    for scale in scale_steps:
+        if scale < 1.0:
+            w, h = image.size
+            resized = image.resize((max(1, int(w * scale)), max(1, int(h * scale))), Image.Resampling.LANCZOS)
+        else:
+            resized = image
+
+        for quality in quality_steps:
+            buf = BytesIO()
+            resized.save(buf, format="JPEG", optimize=True, progressive=True, quality=quality)
+            payload = buf.getvalue()
+            if best_bytes is None or len(payload) < len(best_bytes):
+                best_bytes = payload
+            if len(payload) <= MAX_IMAGE_BYTES:
+                best_bytes = payload
+                break
+
+        if best_bytes and len(best_bytes) <= MAX_IMAGE_BYTES:
+            break
+
+    if not best_bytes:
+        raise ValueError("Could not process this image. Please try another file.")
+
+    UPLOAD_IMAGE_DIR.mkdir(parents=True, exist_ok=True)
+    output_name = f"{Path(safe_name).stem[:40]}-{uuid4().hex[:8]}.jpg"
+    output_path = UPLOAD_IMAGE_DIR / output_name
+    with output_path.open("wb") as f:
+        f.write(best_bytes)
+
+    return f"uploads/{output_name}"
 
 
 def ensure_runtime_tables(db):
@@ -577,7 +637,15 @@ def add_property():
         bedrooms = 0 if is_land else parse_int(request.form.get('bedrooms', 0), 0)
         bathrooms = 0 if is_land else parse_int(request.form.get('bathrooms', 0), 0)
         area = request.form.get('area', 0)
-        image_path = request.form.get('image_path', '').strip() or DEFAULT_TYPE_IMAGES.get(property_type, 'lakeview-house.jpg')
+
+        uploaded_file = request.files.get('uploaded_image')
+        try:
+            uploaded_image_path = compress_and_store_uploaded_image(uploaded_file)
+        except ValueError as err:
+            flash(str(err), 'warning')
+            return redirect(url_for('add_property'))
+
+        image_path = uploaded_image_path or DEFAULT_TYPE_IMAGES.get(property_type, 'lakeview-house.jpg')
         db = get_db(); cur = db.cursor()
         cur.execute("INSERT INTO properties (title,description,price,city,bedrooms,bathrooms,area,property_type,image_path,status,agent_id) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
             (request.form['title'], request.form['description'], request.form['price'],
@@ -589,7 +657,6 @@ def add_property():
     return render_template(
         'add_property.html',
         property_types=PROPERTY_TYPE_OPTIONS,
-        image_options=IMAGE_OPTIONS,
         selected_property_type=PROPERTY_TYPE_OPTIONS[0],
     )
 

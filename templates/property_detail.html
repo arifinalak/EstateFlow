@@ -24,9 +24,15 @@
 
       <div class="card mt2">
         <div class="grid-3" style="gap:.5rem; font-size:.9rem">
+          {% if prop.property_type == 'land' %}
+          <div><span class="text-muted">Category</span><br><strong>Land</strong></div>
+          <div><span class="text-muted">Bathrooms</span><br><strong>0</strong></div>
+          <div><span class="text-muted">Size</span><br><strong>{{ prop.area }} ha</strong></div>
+          {% else %}
           <div><span class="text-muted">Bedrooms</span><br><strong>{{ prop.bedrooms }}</strong></div>
           <div><span class="text-muted">Bathrooms</span><br><strong>{{ prop.bathrooms }}</strong></div>
           <div><span class="text-muted">Area</span><br><strong>{{ prop.area }} sqft</strong></div>
+          {% endif %}
         </div>
       </div>
 

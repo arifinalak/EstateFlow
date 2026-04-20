@@ -7,7 +7,15 @@
     <p class="text-muted">Fill in the listing details</p>
   </div>
   <div class="card" style="max-width:600px">
-    <form method="post">
+    <form method="post" class="add-property-form">
+      <div class="form-group">
+        <label>Property Type</label>
+        <select name="property_type" id="property_type">
+          {% for pt in property_types %}
+          <option value="{{ pt }}" {% if selected_property_type == pt %}selected{% endif %}>{{ pt|title }}</option>
+          {% endfor %}
+        </select>
+      </div>
       <div class="form-group">
         <label>Title</label>
         <input type="text" name="title" required placeholder="e.g. Modern Downtown Apartment">
@@ -26,19 +34,20 @@
           <input type="text" name="city" required placeholder="Dhaka">
         </div>
       </div>
-      <div class="grid-3">
-        <div class="form-group">
-          <label>Bedrooms</label>
-          <input type="number" name="bedrooms" value="0" min="0">
-        </div>
-        <div class="form-group">
-          <label>Bathrooms</label>
-          <input type="number" name="bathrooms" value="0" min="0">
-        </div>
-        <div class="form-group">
-          <label>Area (sqft)</label>
-          <input type="number" name="area" value="0" min="0">
-        </div>
+      <div class="grid-2" id="residential-fields" {% if selected_property_type == 'land' %}style="display:none"{% endif %}>
+          <div class="form-group" id="bedrooms-group">
+            <label>Bedrooms</label>
+            <input type="number" name="bedrooms" id="bedrooms" value="0" min="0">
+          </div>
+          <div class="form-group" id="bathrooms-group">
+            <label>Bathrooms</label>
+            <input type="number" name="bathrooms" id="bathrooms" value="0" min="0">
+          </div>
+      </div>
+
+      <div class="form-group">
+        <label id="area-label"><span class="area-label-sqft">Area (sqft)</span><span class="area-label-ha">Size (ha)</span></label>
+        <input type="number" name="area" id="area" value="0" min="0" step="0.01" required>
       </div>
       <div class="form-group">
         <label>Status</label>
@@ -49,14 +58,6 @@
         </select>
       </div>
       <div class="grid-2">
-        <div class="form-group">
-          <label>Property Type</label>
-          <select name="property_type">
-            {% for pt in property_types %}
-            <option value="{{ pt }}">{{ pt|title }}</option>
-            {% endfor %}
-          </select>
-        </div>
         <div class="form-group">
           <label>Image</label>
           <select name="image_path">
@@ -72,4 +73,31 @@
     </form>
   </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const propertyType = document.getElementById('property_type');
+  const bedroomsGroup = document.getElementById('bedrooms-group');
+  const bathroomsGroup = document.getElementById('bathrooms-group');
+  const bedroomsInput = document.getElementById('bedrooms');
+  const bathroomsInput = document.getElementById('bathrooms');
+  const areaLabel = document.getElementById('area-label');
+
+  const syncFields = () => {
+    const isLand = propertyType.value === 'land';
+    document.getElementById('residential-fields').style.display = isLand ? 'none' : '';
+    bedroomsInput.disabled = isLand;
+    bathroomsInput.disabled = isLand;
+    bedroomsInput.value = isLand ? 0 : bedroomsInput.value || 0;
+    bathroomsInput.value = isLand ? 0 : bathroomsInput.value || 0;
+    areaLabel.textContent = isLand ? 'Size (ha)' : 'Area (sqft)';
+  };
+
+  propertyType.addEventListener('input', syncFields);
+  propertyType.addEventListener('change', syncFields);
+  syncFields();
+  window.addEventListener('load', syncFields);
+  window.addEventListener('pageshow', syncFields);
+  setTimeout(syncFields, 0);
+});
+</script>
 {% endblock %}

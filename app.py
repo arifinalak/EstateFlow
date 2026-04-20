@@ -433,8 +433,66 @@ def buyer_dashboard():
         (session['user_id'],),
     )
     inquiries = cur.fetchall()
+
+    # Compare listings from the same property category by price, area, and city.
+    compare_type = (request.args.get('compare_type') or '').strip().lower()
+    compare_base_id = request.args.get('compare_base_id', type=int)
+    base_property = None
+    comparisons = []
+
+    if compare_base_id:
+        cur.execute(
+            """
+            SELECT id, title, city, price, area, property_type, status
+            FROM properties
+            WHERE id=%s
+            """,
+            (compare_base_id,),
+        )
+        base_property = cur.fetchone()
+        if base_property and base_property.get('property_type'):
+            compare_type = base_property['property_type']
+
+    if compare_type:
+        if base_property:
+            cur.execute(
+                """
+                SELECT id, title, city, price, area, property_type, status
+                FROM properties
+                WHERE property_type=%s
+                ORDER BY (status='available') DESC, price ASC, area DESC
+                LIMIT 30
+                """,
+                (compare_type,),
+            )
+        else:
+            cur.execute(
+                """
+                SELECT id, title, city, price, area, property_type, status
+                FROM properties
+                WHERE property_type=%s
+                ORDER BY (status='available') DESC, price ASC, area DESC
+                LIMIT 30
+                """,
+                (compare_type,),
+            )
+        comparisons = cur.fetchall()
+
+    compare_types = sorted({(p.get('property_type') or '').strip() for p in saved if (p.get('property_type') or '').strip()})
+    if not compare_types:
+        compare_types = PROPERTY_TYPE_OPTIONS
+
     db.close()
-    return render_template('buyer_dashboard.html', saved=saved, inquiries=inquiries)
+    return render_template(
+        'buyer_dashboard.html',
+        saved=saved,
+        inquiries=inquiries,
+        compare_type=compare_type,
+        compare_base_id=compare_base_id,
+        base_property=base_property,
+        comparisons=comparisons,
+        compare_types=compare_types,
+    )
 
 # ─── AGENT ────────────────────────────────────────────────────────────────────
 @app.route('/agent')
@@ -515,12 +573,16 @@ def update_inquiry(iid):
 def add_property():
     if request.method == 'POST':
         property_type = request.form.get('property_type', 'apartment')
+        is_land = property_type == 'land'
+        bedrooms = 0 if is_land else parse_int(request.form.get('bedrooms', 0), 0)
+        bathrooms = 0 if is_land else parse_int(request.form.get('bathrooms', 0), 0)
+        area = request.form.get('area', 0)
         image_path = request.form.get('image_path', '').strip() or DEFAULT_TYPE_IMAGES.get(property_type, 'lakeview-house.jpg')
         db = get_db(); cur = db.cursor()
         cur.execute("INSERT INTO properties (title,description,price,city,bedrooms,bathrooms,area,property_type,image_path,status,agent_id) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
             (request.form['title'], request.form['description'], request.form['price'],
-             request.form['city'],  request.form['bedrooms'],   request.form['bathrooms'],
-             request.form['area'],  property_type, image_path, request.form['status'], session['user_id']))
+             request.form['city'],  bedrooms,  bathrooms,
+             area,  property_type, image_path, request.form['status'], session['user_id']))
         db.commit(); db.close()
         flash('Property added!', 'success')
         return redirect(url_for('agent_dashboard'))
@@ -528,6 +590,7 @@ def add_property():
         'add_property.html',
         property_types=PROPERTY_TYPE_OPTIONS,
         image_options=IMAGE_OPTIONS,
+        selected_property_type=PROPERTY_TYPE_OPTIONS[0],
     )
 
 # ─── ADMIN ────────────────────────────────────────────────────────────────────

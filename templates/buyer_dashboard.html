@@ -9,6 +9,7 @@
       <a class="active" href="{{ url_for('buyer_dashboard') }}">Dashboard</a>
       <a href="{{ url_for('properties') }}">Search Properties</a>
       <a href="#saved-section">Saved Listings</a>
+      <a href="#compare-section">Compare Properties</a>
       <a href="{{ url_for('logout') }}">Logout</a>
     </aside>
 
@@ -42,11 +43,19 @@
             <div class="prop-title">{{ p.title }}</div>
             <div class="prop-city">{{ p.city }}</div>
             <div class="prop-meta">
+              {% if p.property_type == 'land' %}
+              <span>Land</span>
+              <span>{{ p.area }} ha</span>
+              {% else %}
               <span>{{ p.bedrooms }} bd</span>
               <span>{{ p.bathrooms }} ba</span>
               <span>{{ p.area }} sqft</span>
+              {% endif %}
             </div>
-            <a href="{{ url_for('property_detail', pid=p.id) }}" class="btn btn-outline btn-sm mt2">View Details</a>
+            <div class="flex gap1 mt2">
+              <a href="{{ url_for('property_detail', pid=p.id) }}" class="btn btn-outline btn-sm">View Details</a>
+              <a href="{{ url_for('buyer_dashboard', compare_type=(p.property_type or 'apartment')) }}#compare-section" class="btn btn-primary btn-sm">More {{ (p.property_type or 'apartment')|title }}</a>
+            </div>
           </div>
         </div>
         {% endfor %}
@@ -57,6 +66,80 @@
         <a href="{{ url_for('properties') }}" class="btn btn-primary mt2">Browse Properties</a>
       </div>
       {% endif %}
+
+      <h3 id="compare-section" class="section-label mt2">Property Comparison</h3>
+      <div class="card table-card">
+        <form class="comparison-form" method="get" action="{{ url_for('buyer_dashboard') }}">
+          <div class="form-group">
+            <label>Pick a saved property (auto-selects same category)</label>
+            <select name="compare_base_id">
+              <option value="">Choose saved property</option>
+              {% for p in saved %}
+              <option value="{{ p.id }}" {% if compare_base_id == p.id %}selected{% endif %}>{{ p.title }} ({{ (p.property_type or 'apartment')|title }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Or compare by category</label>
+            <select name="compare_type">
+              <option value="">Select category</option>
+              {% for pt in compare_types %}
+              <option value="{{ pt }}" {% if compare_type == pt %}selected{% endif %}>{{ pt|title }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="comparison-actions">
+            <button class="btn btn-primary btn-sm" type="submit">Compare</button>
+            <a href="{{ url_for('buyer_dashboard') }}#compare-section" class="btn btn-outline btn-sm">Reset</a>
+          </div>
+        </form>
+
+        {% if compare_type %}
+          <p class="text-muted mb1">Showing up to 30 <strong>{{ compare_type|title }}</strong> listings compared by size, price, and location.</p>
+        {% endif %}
+
+        <div class="comparison-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Property</th>
+                <th>Category</th>
+                <th>Location</th>
+                <th>Size</th>
+                <th>Price</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in comparisons %}
+              <tr class="{% if base_property and p.id == base_property.id %}comparison-base-row{% endif %}">
+                <td>
+                  <a href="{{ url_for('property_detail', pid=p.id) }}">{{ p.title }}</a>
+                  {% if base_property and p.id == base_property.id %}
+                    <span class="badge comparison-badge">Selected</span>
+                  {% endif %}
+                </td>
+                <td>{{ (p.property_type or 'apartment')|title }}</td>
+                <td>{{ p.city }}</td>
+                <td>{{ "{:,.2f}".format(p.area or 0) }}{% if p.property_type == 'land' %} ha{% else %} sqft{% endif %}</td>
+                <td>${{ "{:,.0f}".format(p.price or 0) }}</td>
+                <td><span class="badge badge-{{ p.status }}">{{ p.status }}</span></td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="6" class="text-muted">
+                  {% if saved %}
+                    Choose a saved property or category to compare similar listings.
+                  {% else %}
+                    Save at least one property first to start comparisons.
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       <h3 class="section-label mt2">My Inquiries</h3>
       <div class="card table-card">

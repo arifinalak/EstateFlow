@@ -36,9 +36,14 @@
         <div class="prop-city">📍 {{ p.city }}</div>
         <div class="mt1"><span class="badge">{{ p.property_type or 'apartment' }}</span></div>
         <div class="prop-meta">
+          {% if p.property_type == 'land' %}
+          <span>🌿 Land</span>
+          <span>📐 {{ p.area }} ha</span>
+          {% else %}
           <span>🛏 {{ p.bedrooms }}</span>
           <span>🚿 {{ p.bathrooms }}</span>
           <span>📐 {{ p.area }} sqft</span>
+          {% endif %}
         </div>
         <span class="badge badge-{{ p.status }}">{{ p.status }}</span>
         <div class="flex gap1 mt2">

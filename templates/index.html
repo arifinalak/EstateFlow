@@ -78,9 +78,14 @@
         <div class="prop-city">{{ p.city }}</div>
         <div class="mt1"><span class="badge">{{ p.property_type or 'apartment' }}</span></div>
         <div class="prop-meta">
+          {% if p.property_type == 'land' %}
+          <span>Land</span>
+          <span>{{ p.area }} ha</span>
+          {% else %}
           <span>{{ p.bedrooms }} bed</span>
           <span>{{ p.bathrooms }} bath</span>
           <span>{{ p.area }} sqft</span>
+          {% endif %}
         </div>
         <a href="{{ url_for('property_detail', pid=p.id) }}" class="btn btn-outline btn-sm mt2">View Details</a>
       </div>

@@ -631,6 +631,54 @@ tr:hover td { background: rgba(255,255,255,.02); }
   padding: .45rem .55rem;
 }
 
+.add-property-form .area-label-ha {
+  display: none;
+}
+
+.add-property-form:has(#property_type option[value='land']:checked) #residential-fields {
+  display: none !important;
+}
+
+.add-property-form:has(#property_type option[value='land']:checked) .area-label-sqft {
+  display: none;
+}
+
+.add-property-form:has(#property_type option[value='land']:checked) .area-label-ha {
+  display: inline;
+}
+
+.comparison-form {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr auto;
+  gap: .65rem;
+  align-items: end;
+  margin-bottom: .75rem;
+}
+
+.comparison-form .form-group {
+  margin-bottom: 0;
+}
+
+.comparison-actions {
+  display: flex;
+  gap: .5rem;
+}
+
+.comparison-table-wrap {
+  overflow-x: auto;
+}
+
+.comparison-base-row td {
+  background: rgba(201, 168, 76, 0.08);
+}
+
+.comparison-badge {
+  margin-left: .45rem;
+  background: rgba(201, 168, 76, 0.2);
+  color: var(--gold-lt);
+  border: 1px solid rgba(201, 168, 76, 0.45);
+}
+
 /* ── Footer ── */
 .site-footer {
   margin-top: 3rem;
@@ -747,6 +795,10 @@ tr:hover td { background: rgba(255,255,255,.02); }
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .dash-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .comparison-form {
     grid-template-columns: 1fr;
   }
 }
